@@ -1,0 +1,24 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+matriz_random = np.random.randint(-21, 21, size=(20, 2))
+#valores de theta0 y theta1 random
+theta0 = matriz_random[:, 0]
+theta1 = matriz_random[:, 1]
+
+def generar_recta(x, y):
+    for i in range(len(x)-1):
+        plt.clf() 
+        plt.scatter(x, y, color='red', marker='x', s=30)
+        plt.plot(x[i:i+2], y[i:i+2], color='green')
+        plt.xlabel('Eje X')
+        plt.ylabel('Eje Y')
+        plt.title(f'Recta generada entre puntos ({x[i]}, {y[i]}) y ({x[i+1]}, {y[i+1]})')
+        plt.legend(['Recta', 'Puntos'])
+        plt.grid(True)
+        plt.xlim(-25, 25)
+        plt.ylim(-25, 25)
+        plt.show(block=False)
+        plt.pause(0.5)
+
+generar_recta(theta0, theta1)

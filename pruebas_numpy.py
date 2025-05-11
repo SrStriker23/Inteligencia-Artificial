@@ -37,3 +37,39 @@ theta = np.linalg.inv(x_b.T @ x_b) @ x_b.T @ y
 print("Theta:", theta)
 theta_lineal= regresion_lineal(x, y)
 print("Theta lineal:", theta_lineal)
+fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+# Primer subplot: Datos originales con la recta de regresión
+axs[0].scatter(x, y, color="m", marker="o", s=30)
+y_prediccion = theta_lineal[0] + theta_lineal[1] * x
+axs[0].plot(x, y_prediccion, color="g")
+axs[0].set_title("Regresión Lineal")
+plt.figure(1)
+plt.scatter(x, y, color="m", marker="o", s=30)
+y_prediccion = theta_lineal[0] + theta_lineal[1] * x
+plt.plot(x, y_prediccion, color="g")
+plt.title("Regresión Lineal")
+plt.xlabel("x")
+plt.ylabel("y")
+
+plt.figure(2)
+errores = y - (theta_lineal[0] + theta_lineal[1] * x)
+plt.scatter(x, errores, color="b", marker="x", s=30)
+plt.axhline(0, color="r", linestyle="--")
+plt.title("Errores")
+plt.xlabel("x")
+plt.ylabel("Error")
+
+plt.show()
+axs[0].set_ylabel("y")
+
+# Segundo subplot: Error cuadrático
+errores = y - (theta_lineal[0] + theta_lineal[1] * x)
+axs[1].scatter(x, errores, color="b", marker="x", s=30)
+axs[1].axhline(0, color="r", linestyle="--")
+axs[1].set_title("Errores")
+axs[1].set_xlabel("x")
+axs[1].set_ylabel("Error")
+
+plt.tight_layout()
+plt.show()

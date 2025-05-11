@@ -2,7 +2,9 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.widgets import TextBox
 import matplotlib.pyplot as plt
+#------------------------------------------------------------------------------------------------#
 
+#extraemos los datos de un archivo y los convertimos a listas para despues convertirlos a arrays de numpy
 with open('data1.txt', 'r') as file:
     texto = file.readlines()
 x = []
@@ -15,22 +17,47 @@ for coordenadas in texto:
 # Datos normales
 x_array = np.array(x)
 y_array = np.array(y)
+#agragamos la fila de 1 a la matriz de x
 x_array = np.column_stack((np.ones(x_array.shape[0]), x_array))
 
-# Datos normalizados
+# Normalizamos los datos para que los graficos sean mas claros
 x_norm = x_array.copy()
 x_norm[:, 1] = (x_array[:, 1] - np.mean(x_array[:, 1])) / np.std(x_array[:, 1])
 
-#caracteristicas iniciales
+#Creamos variables para controlar los datos iniciales de las funciones
 alpha = 0.1
 iteraciones = 100
 theta=np.array([100, 100])
 
+#------------------------------------------------------------------------------------------------#
+#creamos una funcion para guardar el valor de la funcion de costo en cada iteracion
 def compute_cost(x, y, theta):
     m = len(y)
     J = (1/(2*m)*np.sum((x @ theta - y) ** 2))
     return J
 
+#------------------------------------------------------------------------------------------------#
+#Funcion para obener datos del gradiente descendente sin graficar
+def gradiente_descendente(x, y, theta, alpha, iteraciones):    
+    m = len(y)
+    J_historia = np.zeros(iteraciones)
+    theta_historia = [np.array([100, 100])]
+    for i in range(iteraciones):        
+        error = x.dot(theta) - y
+        theta0 = theta[0] - alpha * (1/m) * np.sum(error * x[:, 0])
+        theta1 = theta[1] - alpha * (1/m) * np.sum(error * x[:, 1])
+    
+        # Actualizar theta
+        theta = np.array([theta0, theta1])
+        theta_historia.append(theta.copy())
+        
+        # Guardar el costo en cada iteración
+        J_historia[i] = compute_cost(x, y, theta)
+    
+    return theta, J_historia,theta_historia
+
+#------------------------------------------------------------------------------------------------#
+#Funcion para graficar el gradiente descendente y la funcion de costo al mismo tiempo y ver como van cambiando a medida que se va iterando
 def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
     m = len(y)
 
@@ -72,25 +99,8 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
         theta = np.array([theta0, theta1])
     
     plt.show()
-
-def gradiente_descendente(x, y, theta, alpha, iteraciones):    
-    m = len(y)
-    J_historia = np.zeros(iteraciones)
-    theta_historia = [np.array([10, 2])]
-    for i in range(iteraciones):        
-        error = x.dot(theta) - y
-        theta0 = theta[0] - alpha * (1/m) * np.sum(error * x[:, 0])
-        theta1 = theta[1] - alpha * (1/m) * np.sum(error * x[:, 1])
-    
-        # Actualizar theta
-        theta = np.array([theta0, theta1])
-        theta_historia.append(theta.copy())
-        
-        # Guardar el costo en cada iteración
-        J_historia[i] = compute_cost(x, y, theta)
-    
-    return theta, J_historia,theta_historia
-
+#------------------------------------------------------------------------------------------------#
+#Funcion para graficar la funcion de costo en 3D y el camino del gradiente descendente a medias que se va iterando
 def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
     theta0_vals1 = np.linspace(-200, 200, 100)  # Expandir el rango para cubrir más área
     theta1_vals21 = np.linspace(-200, 200, 100)  # Expandir el rango para cubrir más área
@@ -123,9 +133,11 @@ def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
     ax.legend()
     plt.show()
 
+#------------------------------------------------------------------------------------------------#
+#Funcion para graficar las curvas de nivel de la funcion de costo y el camino del gradiente descendente a medias que se va iterando
 def graficar_curvas_nivel_con_camino(x, y, theta_historia):
-    theta0_vals2 = np.linspace(-50, 55, 100)
-    theta1_vals2 = np.linspace(-50, 55, 100)
+    theta0_vals2 = np.linspace(-200, 200, 100)
+    theta1_vals2 = np.linspace(-200, 200, 100)
     J_vals = np.zeros((len(theta0_vals2), len(theta1_vals2)))
 
     for i, theta0 in enumerate(theta0_vals2):
@@ -135,7 +147,7 @@ def graficar_curvas_nivel_con_camino(x, y, theta_historia):
 
     theta0_vals2, theta1_vals2 = np.meshgrid(theta0_vals2, theta1_vals2)
 
-    plt.contour(theta0_vals2, theta1_vals2, J_vals.T, levels=np.logspace(-2, 3, 20), cmap='viridis')
+    plt.contour(theta0_vals2, theta1_vals2, J_vals, levels=25, cmap='viridis')
     plt.xlabel('Theta 0')
     plt.ylabel('Theta 1')
     plt.title('Curvas de Nivel de la Funcion de Costo')
@@ -149,13 +161,15 @@ def graficar_curvas_nivel_con_camino(x, y, theta_historia):
         plt.grid(True)
         plt.pause(0.1)
     plt.show()
-    
 
+#------------------------------------------------------------------------------------------------#
+#funcion para calcular los valores de theta usando la ecuacion normal
 def ecuacion_normal(x, y):
     x_transpuesta = np.transpose(x)
     theta = np.linalg.inv(x_transpuesta @ x) @ x_transpuesta @ y
     return theta
-
+#------------------------------------------------------------------------------------------------#
+#funcion para graficar la regresion lineal utilizando los valores de theta obtenidos por la ecuacion normal y poder realizar predicciones
 def graficar_regresion_lineal(x, y, theta):
     fig, ax = plt.subplots()
     plt.subplots_adjust(bottom=0.2)
@@ -207,11 +221,12 @@ def graficar_regresion_lineal(x, y, theta):
 
     text_box.on_submit(submit)
     plt.show()
+#------------------------------------------------------------------------------------------------#
 
-#graficar_regresion_lineal(x_array, y_array, theta_ecuacion_normal)
-valores= gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
-theta_ecuacion_normal = ecuacion_normal(x_array, y_array)
-#graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores[1])
-#graficar_regresion_lineal(x_array, y_array, theta_ecuacion_normal)
-#graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores[2])
-graficar_curvas_nivel_con_camino(x_norm, y_array, valores[2])
+
+valores_graficos = gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
+valores_ecuacion_normal = ecuacion_normal(x_array, y_array)
+graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores_graficos[1])
+graficar_regresion_lineal(x_array, y_array, valores_ecuacion_normal)
+graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores_graficos[2])
+graficar_curvas_nivel_con_camino(x_norm, y_array, valores_graficos[2])

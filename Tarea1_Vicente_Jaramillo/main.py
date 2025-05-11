@@ -1,5 +1,6 @@
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.widgets import TextBox
 import matplotlib.pyplot as plt
 
 with open('data1.txt', 'r') as file:
@@ -14,7 +15,6 @@ for coordenadas in texto:
 # Datos normales
 x_array = np.array(x)
 y_array = np.array(y)
-
 x_array = np.column_stack((np.ones(x_array.shape[0]), x_array))
 
 # Datos normalizados
@@ -22,9 +22,9 @@ x_norm = x_array.copy()
 x_norm[:, 1] = (x_array[:, 1] - np.mean(x_array[:, 1])) / np.std(x_array[:, 1])
 
 #caracteristicas iniciales
-alpha = 0.01
-iteraciones = 1500
-theta=np.array([0, 0])
+alpha = 0.1
+iteraciones = 100
+theta=np.array([100, 100])
 
 def compute_cost(x, y, theta):
     m = len(y)
@@ -62,15 +62,17 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
         plt.pause(0.001)  # Pausa para actualizar los gráficos
 
         # Limpiar el gráfico de gradiente descendente para la siguiente iteración
-        ax1.cla()
+        if i < iteraciones - 1:
+            ax1.cla()
 
         # Actualizar theta
         error = x.dot(theta) - y
         theta0 = theta[0] - alpha * (1/m) * np.sum(error * x[:, 0])
         theta1 = theta[1] - alpha * (1/m) * np.sum(error * x[:, 1])
         theta = np.array([theta0, theta1])
-
+    
     plt.show()
+
 def gradiente_descendente(x, y, theta, alpha, iteraciones):    
     m = len(y)
     J_historia = np.zeros(iteraciones)
@@ -88,65 +90,128 @@ def gradiente_descendente(x, y, theta, alpha, iteraciones):
         J_historia[i] = compute_cost(x, y, theta)
     
     return theta, J_historia,theta_historia
-valores_costo=gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
-graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores_costo[1])
-def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
-    theta0_vals = np.linspace(-200, 200, 100)  # Expandir el rango para cubrir más área
-    theta1_vals = np.linspace(-200, 200, 100)  # Expandir el rango para cubrir más área
-    J_vals = np.zeros((len(theta0_vals), len(theta1_vals)))
 
-    for i, theta0 in enumerate(theta0_vals):
-        for j, theta1 in enumerate(theta1_vals):
+def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
+    theta0_vals1 = np.linspace(-200, 200, 100)  # Expandir el rango para cubrir más área
+    theta1_vals21 = np.linspace(-200, 200, 100)  # Expandir el rango para cubrir más área
+    J_vals = np.zeros((len(theta0_vals1), len(theta1_vals21)))
+
+    for i, theta0 in enumerate(theta0_vals1):
+        for j, theta1 in enumerate(theta1_vals21):
             theta_temp = np.array([theta0, theta1])
             J_vals[j, i] = compute_cost(x, y, theta_temp)  # Corregir el índice para que coincida con la malla
 
-    theta0_vals, theta1_vals = np.meshgrid(theta0_vals, theta1_vals)
+    theta0_vals1, theta1_vals21 = np.meshgrid(theta0_vals1, theta1_vals21)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(theta0_vals, theta1_vals, J_vals, cmap='viridis', alpha=0.8)
+    ax.plot_surface(theta0_vals1, theta1_vals21, J_vals, cmap='viridis', alpha=0.8)
     ax.set_xlabel('Theta 0')
     ax.set_ylabel('Theta 1')
     ax.set_zlabel('Costo')
     ax.set_title('Funcion de Costo con Camino del Gradiente Descendente')
 
-    # Graficar el camino del gradiente descendente como puntos individuales
+    # Graficar el camino del gradiente descendente punto por punto
     theta0_historia = [theta[0] for theta in theta_historia]
     theta1_historia = [theta[1] for theta in theta_historia]
     J_historia = [compute_cost(x, y, theta) for theta in theta_historia]
-    ax.scatter(theta0_historia, theta1_historia, J_historia, color='red', marker='x', s=30, label='Camino del Gradiente')
+
+    for i in range(len(theta0_historia)):
+        ax.scatter(theta0_historia[i], theta1_historia[i], J_historia[i], color='red', marker='x', s=30, label='Camino del Gradiente' if i == 0 else "")
+        plt.pause(0.1)  # Pausa para mostrar los puntos gradualmente
+
     ax.legend()
     plt.show()
-valores=gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
-graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores[2])
 
 def graficar_curvas_nivel_con_camino(x, y, theta_historia):
-    theta0_vals = np.linspace(-50, 55, 100)
-    theta1_vals = np.linspace(-50, 55, 100)
-    J_vals = np.zeros((len(theta0_vals), len(theta1_vals)))
+    theta0_vals2 = np.linspace(-50, 55, 100)
+    theta1_vals2 = np.linspace(-50, 55, 100)
+    J_vals = np.zeros((len(theta0_vals2), len(theta1_vals2)))
 
-    for i, theta0 in enumerate(theta0_vals):
-        for j, theta1 in enumerate(theta1_vals):
+    for i, theta0 in enumerate(theta0_vals2):
+        for j, theta1 in enumerate(theta1_vals2):
             theta_temp = np.array([theta0, theta1])
             J_vals[i, j] = compute_cost(x, y, theta_temp)
 
-    theta0_vals, theta1_vals = np.meshgrid(theta0_vals, theta1_vals)
+    theta0_vals2, theta1_vals2 = np.meshgrid(theta0_vals2, theta1_vals2)
 
-    plt.contour(theta0_vals, theta1_vals, J_vals.T, levels=np.logspace(-2, 3, 20), cmap='viridis')
+    plt.contour(theta0_vals2, theta1_vals2, J_vals.T, levels=np.logspace(-2, 3, 20), cmap='viridis')
     plt.xlabel('Theta 0')
     plt.ylabel('Theta 1')
     plt.title('Curvas de Nivel de la Funcion de Costo')
-
-    # Graficar solo las marcas de x del camino del gradiente descendente
+    # Graficar solo las marcas de x del camino del gradiente descendente una a una
     theta0_historia = [theta[0] for theta in theta_historia]
     theta1_historia = [theta[1] for theta in theta_historia]
-    plt.scatter(theta0_historia, theta1_historia, color='red', marker='x', s=10, label='Camino del Gradiente')
-    plt.legend()
-    plt.grid(True)
+    for i in range(len(theta0_historia)):
+        plt.scatter(theta0_historia[i], theta1_historia[i], color='red', marker='x', s=10, label='Camino del Gradiente' if i == 0 else "")
+        if i == 0:  
+            plt.legend()
+        plt.grid(True)
+        plt.pause(0.1)
     plt.show()
+    
 
 def ecuacion_normal(x, y):
     x_transpuesta = np.transpose(x)
     theta = np.linalg.inv(x_transpuesta @ x) @ x_transpuesta @ y
     return theta
 
+def graficar_regresion_lineal(x, y, theta):
+    fig, ax = plt.subplots()
+    plt.subplots_adjust(bottom=0.2)
+    ax.scatter(x[:, 1], y, color='red', marker='x', label='Datos de entrenamiento')
+    ax.plot(x[:, 1], x @ theta, color='green', label='Regresión lineal')
+    ax.set_xlabel('Población de la ciudad en 10,000s')
+    ax.set_ylabel('Beneficio en 10,000s')
+    ax.set_title(f'Regresión Lineal usando la Ecuación Normal \nrecta generada {theta[0]:.3f} + {theta[1]:.3f} * x')
+    ax.legend()
+    ax.grid(True)
+
+    # Crear un cuadro de texto para ingresar valores
+    axbox = plt.axes([0.5, 0.02, 0.3, 0.05])  # Adjusted [left, bottom, width, height] for better placement
+    text_box = TextBox(axbox, 'Ingresar Población (en 10,000s):')  # Adjusted label_pad for better spacing
+
+    # Lista para almacenar los puntos de predicción
+    puntos_prediccion = []
+    lineas_discontinuas = []
+
+    # Función para manejar el evento de envío del cuadro de texto
+    def submit(text):
+        nonlocal puntos_prediccion, lineas_discontinuas
+        try:
+            poblacion = float(text)
+            beneficio = theta[0] + theta[1] * poblacion
+            ax.set_title(f'Predicción: {beneficio * 1000:.2f} para una población de {poblacion * 1000:.0f}')
+            
+            # Eliminar puntos de predicción y líneas discontinuas anteriores
+            for punto in puntos_prediccion:
+                punto.remove()
+            for linea in lineas_discontinuas:
+                linea.remove()
+            puntos_prediccion.clear()
+            lineas_discontinuas.clear()
+
+            # Graficar el nuevo punto de predicción
+            punto_prediccion, = ax.plot([poblacion], [beneficio], color='blue', marker='o', label='Predicción')
+            puntos_prediccion.append(punto_prediccion)
+
+            # Graficar líneas discontinuas desde los ejes
+            linea_x = ax.axhline(y=beneficio, color='blue', linestyle='--', xmin=0, xmax=(poblacion - ax.get_xlim()[0]) / (ax.get_xlim()[1] - ax.get_xlim()[0]))
+            linea_y = ax.axvline(x=poblacion, color='blue', linestyle='--', ymin=0, ymax=(beneficio - ax.get_ylim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0]))
+            lineas_discontinuas.extend([linea_x, linea_y])
+
+            ax.legend()
+            fig.canvas.draw_idle()  # Actualizar el gráfico
+        except ValueError:
+            print("Por favor, ingrese un número válido.")
+
+    text_box.on_submit(submit)
+    plt.show()
+
+#graficar_regresion_lineal(x_array, y_array, theta_ecuacion_normal)
+valores= gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
+theta_ecuacion_normal = ecuacion_normal(x_array, y_array)
+#graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores[1])
+#graficar_regresion_lineal(x_array, y_array, theta_ecuacion_normal)
+#graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores[2])
+graficar_curvas_nivel_con_camino(x_norm, y_array, valores[2])

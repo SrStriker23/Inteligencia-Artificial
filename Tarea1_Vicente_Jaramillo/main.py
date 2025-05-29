@@ -1,6 +1,7 @@
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.widgets import TextBox
+from matplotlib.widgets import Button
 import matplotlib.pyplot as plt
 #------------------------------------------------------------------------------------------------#
 
@@ -30,7 +31,7 @@ x_norm[:, 1] = (x_array[:, 1] - np.mean(x_array[:, 1])) / np.std(x_array[:, 1])
 
 """Creamos variables para controlar los datos iniciales de las funciones"""
 alpha = 0.1
-iteraciones = 300
+iteraciones = 100
 theta=np.array([200, 200])
 
 #------------------------------------------------------------------------------------------------#
@@ -73,7 +74,11 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
     # Crear la segunda ventana para el costo vs iteraciones
     fig2, ax2 = plt.subplots(figsize=(6, 6))
 
-    # Gradiente descendente
+    # Posicionar las ventanas con una separación
+    # (x, y, ancho, alto) en píxeles
+    fig1.canvas.manager.window.wm_geometry("+100+100")
+    fig2.canvas.manager.window.wm_geometry("+800+100")
+
     for i in range(iteraciones):
         recta = theta[0] + theta[1] * x[:, 1]
         ax1.plot(x[:, 1], recta, color='green')
@@ -91,7 +96,7 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
         ax2.set_ylabel("Costo")
         ax2.grid(True)
 
-        plt.pause(0.001)  # Pausa para actualizar los gráficos
+        plt.pause(0.01)  # Pausa para actualizar los gráficos
 
         # Limpiar el gráfico de gradiente descendente para la siguiente iteración
         if i < iteraciones - 1:
@@ -102,40 +107,63 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
         theta0 = theta[0] - alpha * (1/m) * np.sum(error * x[:, 0])
         theta1 = theta[1] - alpha * (1/m) * np.sum(error * x[:, 1])
         theta = np.array([theta0, theta1])
-    
+        # Ajustar la posición del botón para que sea visible
+    # Ajustar el espacio inferior para el botón
+    fig2.subplots_adjust(bottom=0.22)
+    # Colocar el botón justo debajo del eje x, centrado horizontalmente
+    ax_button = fig2.add_axes([0.3, 0.01, 0.4, 0.07])
+    btn = Button(ax_button, 'Siguiente gráfico')
+
+    def cerrar(_):
+        plt.close(fig1)
+        plt.close(fig2)
+    btn.on_clicked(cerrar)
     plt.show()
 #------------------------------------------------------------------------------------------------#
 
 def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
-    """Funcion para graficar la funcion de costo en 3D y el camino del gradiente descendente a medias que se va iterando"""
-    theta0_vals1 = np.linspace(-200, 200, 100) 
-    theta1_vals2 = np.linspace(-200, 200, 100)  
-    J_vals = np.zeros((len(theta0_vals1), len(theta1_vals2)))
+    """Grafica la función de costo en 3D y el camino del gradiente descendente animado."""
 
-    for i, theta0 in enumerate(theta0_vals1):
-        for j, theta1 in enumerate(theta1_vals2):
+    theta0_vals = np.linspace(-200, 200, 100)
+    theta1_vals = np.linspace(-200, 200, 100)
+    J_vals = np.zeros((len(theta0_vals), len(theta1_vals)))
+
+    # Calcular la función de costo para cada combinación de theta0 y theta1
+    for i, theta0 in enumerate(theta0_vals):
+        for j, theta1 in enumerate(theta1_vals):
             theta_temp = np.array([theta0, theta1])
-            J_vals[j, i] = compute_cost(x, y, theta_temp) 
+            J_vals[j, i] = compute_cost(x, y, theta_temp)
 
-    theta0_vals1, theta1_vals2 = np.meshgrid(theta0_vals1, theta1_vals2)
+    theta0_mesh, theta1_mesh = np.meshgrid(theta0_vals, theta1_vals)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(theta0_vals1, theta1_vals2, J_vals, cmap='viridis', alpha=0.8)
+    surf = ax.plot_surface(theta0_mesh, theta1_mesh, J_vals, cmap='viridis', alpha=0.8, edgecolor='none')
     ax.set_xlabel('Theta 0')
     ax.set_ylabel('Theta 1')
     ax.set_zlabel('Costo')
-    ax.set_title('Funcion de Costo con Camino del Gradiente Descendente')
+    ax.set_title('Función de Costo y Camino del Gradiente Descendente')
 
-    # Graficar el camino del gradiente descendente punto por punto
-    theta0_historia = [theta[0] for theta in theta_historia]
-    theta1_historia = [theta[1] for theta in theta_historia]
-    J_historia = [compute_cost(x, y, theta) for theta in theta_historia]
+    # Animar el descenso del gradiente
+    theta0_hist = [theta[0] for theta in theta_historia]
+    theta1_hist = [theta[1] for theta in theta_historia]
+    J_hist = [compute_cost(x, y, theta) for theta in theta_historia]
 
-    for i in range(len(theta0_historia)):
-        ax.scatter(theta0_historia[i], theta1_historia[i], J_historia[i], color='red', marker='x', s=30, label='Camino del Gradiente' if i == 0 else "")
-        plt.pause(0.1)  
+    camino, = ax.plot([], [], [], color='red', marker='x', label='Camino del Gradiente', linewidth=2, markersize=6)
 
+    for i in range(1, len(theta0_hist) + 1):
+        camino.set_data(theta0_hist[:i], theta1_hist[:i])
+        camino.set_3d_properties(J_hist[:i])
+        plt.pause(0.01)
+
+    plt.subplots_adjust(bottom=0.18)
+    ax_button = plt.axes([0.35, 0.05, 0.3, 0.07])
+    btn = Button(ax_button, 'Siguiente gráfico')
+
+    def cerrar(_):
+        plt.close(fig)
+
+    btn.on_clicked(cerrar)
     ax.legend()
     plt.show()
 
@@ -167,7 +195,16 @@ def graficar_curvas_nivel_con_camino(x, y, theta_historia):
         if i == 0:  
             plt.legend()
         plt.grid(True)
-        plt.pause(0.1)
+        plt.pause(0.01)
+        # Ajustar la posición del botón para que sea visible
+    plt.subplots_adjust(bottom=0.18)
+    ax_button = plt.axes([0.35, 0.05, 0.3, 0.07])
+    btn = Button(ax_button, 'Finalizar codigo')
+
+    def cerrar(_):
+        plt.close(plt.gcf())
+
+    btn.on_clicked(cerrar)
     plt.show()
 
 #------------------------------------------------------------------------------------------------#
@@ -190,13 +227,10 @@ def graficar_regresion_lineal(x, y, theta):
     ax.set_title(f'Regresión Lineal usando la Ecuación Normal \nrecta generada {theta[0]:.3f} + {theta[1]:.3f} * x')
     ax.legend()
     ax.grid(True)
-
-    
     axbox = plt.axes([0.5, 0.02, 0.3, 0.05])   
     text_box = TextBox(axbox, 'Ingresar Población (en 10,000s):')  
     puntos_prediccion = []
     lineas_discontinuas = []
-
 
     def submit(text):
         nonlocal puntos_prediccion, lineas_discontinuas
@@ -211,7 +245,6 @@ def graficar_regresion_lineal(x, y, theta):
                 linea.remove()
             puntos_prediccion.clear()
             lineas_discontinuas.clear()
-
            
             punto_prediccion, = ax.plot([poblacion], [beneficio], color='blue', marker='o', label='Predicción')
             puntos_prediccion.append(punto_prediccion)
@@ -224,18 +257,29 @@ def graficar_regresion_lineal(x, y, theta):
             fig.canvas.draw_idle()  
         except ValueError:
             print("Por favor, ingrese un número válido.")
-
     text_box.on_submit(submit)
+    plt.subplots_adjust(bottom=0.18)
+    fig.set_size_inches(8, 6)
+    try:
+        fig.canvas.manager.window.wm_geometry("+400+100")
+    except Exception:
+        pass  
+
+    ax_button = plt.axes([0.05, 0.05, 0.15, 0.05])
+    btn = Button(ax_button, 'Siguiente gráfico')
+
+    def cerrar(_):
+        plt.close(fig)
+
+    btn.on_clicked(cerrar)
     plt.show()
 #------------------------------------------------------------------------------------------------#
 
 valores_graficos = gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
 valores_ecuacion_normal = ecuacion_normal(x_array, y_array)
-#graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores_graficos[1])
+graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores_graficos[1])
 graficar_regresion_lineal(x_array, y_array, valores_ecuacion_normal)
-#graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores_graficos[2])
-#graficar_curvas_nivel_con_camino(x_norm, y_array, valores_graficos[2])
+graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores_graficos[2])
+graficar_curvas_nivel_con_camino(x_norm, y_array, valores_graficos[2])
 
 
-print("Theta gradiente descendente (normalizado):", valores_graficos[0])
-print("Theta ecuación normal (normalizado):", valores_ecuacion_normal)

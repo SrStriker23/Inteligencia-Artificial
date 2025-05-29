@@ -67,15 +67,11 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
     """Funcion para graficar el gradiente descendente y la funcion de costo al mismo tiempo y ver como van cambiando a medida que se va iterando"""
     m = len(y)
 
-    # Crear la primera ventana para el gradiente descendente
     fig1, ax1 = plt.subplots(figsize=(6, 6))
     fig1.suptitle(f"Gradiente Descendente con alpha={alpha}")
 
-    # Crear la segunda ventana para el costo vs iteraciones
     fig2, ax2 = plt.subplots(figsize=(6, 6))
 
-    # Posicionar las ventanas con una separación
-    # (x, y, ancho, alto) en píxeles
     fig1.canvas.manager.window.wm_geometry("+100+100")
     fig2.canvas.manager.window.wm_geometry("+800+100")
 
@@ -96,21 +92,17 @@ def graficar_gradiente_y_costos(x, y, theta, alpha, iteraciones, J_historia):
         ax2.set_ylabel("Costo")
         ax2.grid(True)
 
-        plt.pause(0.01)  # Pausa para actualizar los gráficos
+        plt.pause(0.01)  
 
-        # Limpiar el gráfico de gradiente descendente para la siguiente iteración
         if i < iteraciones - 1:
             ax1.cla()
 
-        # Actualizar theta
         error = x.dot(theta) - y
         theta0 = theta[0] - alpha * (1/m) * np.sum(error * x[:, 0])
         theta1 = theta[1] - alpha * (1/m) * np.sum(error * x[:, 1])
         theta = np.array([theta0, theta1])
-        # Ajustar la posición del botón para que sea visible
-    # Ajustar el espacio inferior para el botón
+
     fig2.subplots_adjust(bottom=0.22)
-    # Colocar el botón justo debajo del eje x, centrado horizontalmente
     ax_button = fig2.add_axes([0.3, 0.01, 0.4, 0.07])
     btn = Button(ax_button, 'Siguiente gráfico')
 
@@ -128,7 +120,7 @@ def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
     theta1_vals = np.linspace(-200, 200, 100)
     J_vals = np.zeros((len(theta0_vals), len(theta1_vals)))
 
-    # Calcular la función de costo para cada combinación de theta0 y theta1
+    
     for i, theta0 in enumerate(theta0_vals):
         for j, theta1 in enumerate(theta1_vals):
             theta_temp = np.array([theta0, theta1])
@@ -136,15 +128,19 @@ def graficar_funcion_costo_3d_con_camino(x, y, theta_historia):
 
     theta0_mesh, theta1_mesh = np.meshgrid(theta0_vals, theta1_vals)
 
-    fig = plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(6, 6))
     ax = fig.add_subplot(111, projection='3d')
+    try:
+        fig.canvas.manager.window.wm_geometry("+600+100")
+    except Exception:
+        pass
     surf = ax.plot_surface(theta0_mesh, theta1_mesh, J_vals, cmap='viridis', alpha=0.8, edgecolor='none')
     ax.set_xlabel('Theta 0')
     ax.set_ylabel('Theta 1')
     ax.set_zlabel('Costo')
     ax.set_title('Función de Costo y Camino del Gradiente Descendente')
 
-    # Animar el descenso del gradiente
+    
     theta0_hist = [theta[0] for theta in theta_historia]
     theta1_hist = [theta[1] for theta in theta_historia]
     J_hist = [compute_cost(x, y, theta) for theta in theta_historia]
@@ -183,7 +179,12 @@ def graficar_curvas_nivel_con_camino(x, y, theta_historia):
 
     theta0_vals2, theta1_vals2 = np.meshgrid(theta0_vals2, theta1_vals2)
 
-    plt.contour(theta0_vals2, theta1_vals2, J_vals, levels=25, cmap='viridis')
+    fig,ax= plt.subplots(figsize=(6, 6))
+    try:
+        fig.canvas.manager.window.wm_geometry("+600+100")
+    except Exception:
+        pass
+    plt.contour(theta0_vals2, theta1_vals2, J_vals, levels=20, cmap='viridis')
     plt.xlabel('Theta 0')
     plt.ylabel('Theta 1')
     plt.title('Curvas de Nivel de la Funcion de Costo')
@@ -196,9 +197,9 @@ def graficar_curvas_nivel_con_camino(x, y, theta_historia):
             plt.legend()
         plt.grid(True)
         plt.pause(0.01)
-        # Ajustar la posición del botón para que sea visible
+
     plt.subplots_adjust(bottom=0.18)
-    ax_button = plt.axes([0.35, 0.05, 0.3, 0.07])
+    ax_button = plt.axes([0.3, 0.01, 0.4, 0.07])
     btn = Button(ax_button, 'Finalizar codigo')
 
     def cerrar(_):
@@ -232,12 +233,15 @@ def graficar_regresion_lineal(x, y, theta):
     puntos_prediccion = []
     lineas_discontinuas = []
 
+    xlim_original = ax.get_xlim()
+    ylim_original = ax.get_ylim()
+
     def submit(text):
-        nonlocal puntos_prediccion, lineas_discontinuas
+        nonlocal puntos_prediccion, lineas_discontinuas, xlim_original, ylim_original
         try:
-            poblacion = float(text)
+            poblacion = int(text)
             beneficio = theta[0] + theta[1] * poblacion
-            ax.set_title(f'Predicción: {beneficio * 1000:.2f} para una población de {poblacion * 1000:.0f}')
+            ax.set_title(f'Predicción: beneficio de {beneficio * 10000:.3f} para una población de {poblacion * 1000}')
             
             for punto in puntos_prediccion:
                 punto.remove()
@@ -249,10 +253,24 @@ def graficar_regresion_lineal(x, y, theta):
             punto_prediccion, = ax.plot([poblacion], [beneficio], color='blue', marker='o', label='Predicción')
             puntos_prediccion.append(punto_prediccion)
 
+            margen_x = (xlim_original[1] - xlim_original[0]) * 0.1
+            margen_y = (ylim_original[1] - ylim_original[0]) * 0.1
+            nuevo_xlim = list(xlim_original)
+            nuevo_ylim = list(ylim_original)
+            if poblacion < xlim_original[0]:
+                nuevo_xlim[0] = poblacion - margen_x
+            if poblacion > xlim_original[1]:
+                nuevo_xlim[1] = poblacion + margen_x
+            if beneficio < ylim_original[0]:
+                nuevo_ylim[0] = beneficio - margen_y
+            if beneficio > ylim_original[1]:
+                nuevo_ylim[1] = beneficio + margen_y
+            ax.set_xlim(nuevo_xlim)
+            ax.set_ylim(nuevo_ylim)
+
             linea_x = ax.axhline(y=beneficio, color='blue', linestyle='--', xmin=0, xmax=(poblacion - ax.get_xlim()[0]) / (ax.get_xlim()[1] - ax.get_xlim()[0]))
             linea_y = ax.axvline(x=poblacion, color='blue', linestyle='--', ymin=0, ymax=(beneficio - ax.get_ylim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0]))
             lineas_discontinuas.extend([linea_x, linea_y])
-
             ax.legend()
             fig.canvas.draw_idle()  
         except ValueError:
@@ -264,7 +282,6 @@ def graficar_regresion_lineal(x, y, theta):
         fig.canvas.manager.window.wm_geometry("+400+100")
     except Exception:
         pass  
-
     ax_button = plt.axes([0.05, 0.05, 0.15, 0.05])
     btn = Button(ax_button, 'Siguiente gráfico')
 
@@ -274,12 +291,10 @@ def graficar_regresion_lineal(x, y, theta):
     btn.on_clicked(cerrar)
     plt.show()
 #------------------------------------------------------------------------------------------------#
-
+"""DATOS PARA PODER EJECUTAR LAS FUNCIONES Y GRAFICAR LOS RESULTADOS"""
 valores_graficos = gradiente_descendente(x_norm, y_array, theta, alpha, iteraciones)
 valores_ecuacion_normal = ecuacion_normal(x_array, y_array)
 graficar_gradiente_y_costos(x_norm, y_array, theta, alpha, iteraciones, valores_graficos[1])
 graficar_regresion_lineal(x_array, y_array, valores_ecuacion_normal)
 graficar_funcion_costo_3d_con_camino(x_norm, y_array, valores_graficos[2])
 graficar_curvas_nivel_con_camino(x_norm, y_array, valores_graficos[2])
-
-
